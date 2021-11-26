@@ -27,7 +27,8 @@ public: // Public methods
 
 public: // Instantiation
 	/// @brief Initialize nesbus
-	nesbus(nescart& _cartDock) : m_ROM{ &_cartDock } { };
+	nesbus(nescart& _cartDock) : m_ROM{ &_cartDock } { }
+	nesbus() { }
 };
 
 #endif // !_NESBUS_H_

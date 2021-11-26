@@ -1,19 +1,13 @@
-#include <iostream>
 #include <SDL.h>
+#include <iostream>
 
-#include "res/sfot/sfot.h"
-#include "res/nes/nescart.h"
-#define op (u8)sfotops::
+#include "res/nes/nes.h"
 
 int main(int argc, char** argv)
 {
-	nescart cart;
-	nesbus bus(cart);
-	sfot processor;
-	
-	cart.LoadCartridge("./carts/mario.nes");
+	nes emulator;
 
-	std::cout << "done" << std::endl;
+	emulator.Run();
 
 	return 0;
 }
