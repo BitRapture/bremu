@@ -42,19 +42,19 @@ private: // Emulation Variables
 	u16 (sfot::* e_AMJT[10])(nesbus&);
 
 public: // Configurable cpu vectors
-	// NMI vector (High byte)
+	// NMI vector (High)
 	u16 e_NMI_L{ 0xFFFA };
-	// NMI vector (Low byte)
+	// NMI vector (Low)
 	u16 e_NMI_H{ 0xFFFB };
 
-	// RESET vector (High byte)
+	// RESET vector (High)
 	u16 e_RESET_L{ 0xFFFC };
-	// RESET vector (Low byte)
+	// RESET vector (Low)
 	u16 e_RESET_H{ 0xFFFD };
 
-	// IRQ/BRK vector (High byte)
+	// IRQ/BRK vector (High)
 	u16 e_BRK_L{ 0xFFFE };
-	// BRK vector (Low byte)
+	// BRK vector (Low)
 	u16 e_BRK_H{ 0xFFFF };
 
 

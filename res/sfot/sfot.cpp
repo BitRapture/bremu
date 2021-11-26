@@ -14,73 +14,72 @@
 u16 sfot::AM_Abs(nesbus& _mem)
 {
 	// Get address (little-endian) from next two bytes
-	u16 addr = _mem[r_PC]; ++r_PC;
-	addr |= (_mem[r_PC] << 8); ++r_PC;
+	u16 addr = _mem.CPUReadMapping(r_PC); ++r_PC;
+	addr |= (_mem.CPUReadMapping(r_PC) << 8); ++r_PC;
 	return addr;
 }
 u16 sfot::AM_AbsX(nesbus& _mem)
 {
 	// Get address (little-endian) from next two bytes, offset by X
-	u16 addr = _mem[r_PC]; ++r_PC;
-	addr |= (_mem[r_PC] << 8); ++r_PC;
+	u16 addr = _mem.CPUReadMapping(r_PC); ++r_PC;
+	addr |= (_mem.CPUReadMapping(r_PC) << 8); ++r_PC;
 	addr += r_X;
 	return addr;
 }
 u16 sfot::AM_AbsY(nesbus& _mem)
 {
 	// Get address (little-endian) from next two bytes, offset by Y
-	u16 addr = _mem[r_PC]; ++r_PC;
-	addr |= (_mem[r_PC] << 8); ++r_PC;
+	u16 addr = _mem.CPUReadMapping(r_PC); ++r_PC;
+	addr |= (_mem.CPUReadMapping(r_PC) << 8); ++r_PC;
 	addr += r_Y;
 	return addr;
 }
 u16 sfot::AM_Ind(nesbus& _mem)
 {
 	// Get address indirectly from next two bytes
-	u16 addr = _mem[r_PC]; ++r_PC;
-	addr |= (_mem[r_PC] << 8); ++r_PC;
-	addr = _mem[addr]; 
-	return addr;
+	u16 addr = _mem.CPUReadMapping(r_PC); ++r_PC;
+	addr |= (_mem.CPUReadMapping(r_PC) << 8); ++r_PC;
+	return (u16)(_mem.CPUReadMapping(addr) | (_mem.CPUReadMapping((u16)(addr + 1)) << 8));
 }
 u16 sfot::AM_XInd(nesbus& _mem)
 {
 	// Get address from the zero-page + r_X with wrap around
-	u8 zpg = (u8)(_mem[r_PC] + r_X); ++r_PC;
-	return (u16)(_mem[zpg] | (_mem[(u8)(zpg + 1)] << 8));
+	u8 zpg = (u8)(_mem.CPUReadMapping(r_PC) + r_X); ++r_PC;
+	return (u16)(_mem.CPUReadMapping(zpg) | (_mem.CPUReadMapping((u8)(zpg + 1)) << 8));
 }
 u16 sfot::AM_IndY(nesbus& _mem)
 {
 	// Get address from the _mem(zero-page) + r_Y
-	u16 zpg = _mem[r_PC]; ++r_PC;
-	return (u16)(_mem[zpg] | (_mem[zpg + 1] << 8) + r_Y);
+	u16 zpg = _mem.CPUReadMapping(r_PC); ++r_PC;
+	return (u16)(_mem.CPUReadMapping(zpg) | (_mem.CPUReadMapping(zpg + 1) << 8) + r_Y);
 }
 u16 sfot::AM_Rel(nesbus& _mem)
 {
 	// For branches, next byte is a signed offset for r_PC
 	u16 addr = r_PC; 
-	addr += (s8)(_mem[r_PC]); ++r_PC;
+	addr += (s8)(_mem.CPUReadMapping(r_PC)); ++r_PC;
 	return addr;
 }
 u16 sfot::AM_Zpg(nesbus& _mem)
 {
 	// Zero-page addressing
-	return _mem[r_PC++];
+	return _mem.CPUReadMapping(r_PC++);
 }
 u16 sfot::AM_ZpgX(nesbus& _mem)
 {
 	// Zero-page indirect addressing r_X
-	return (u8)(_mem[r_PC++] + r_X);
+	return (u8)(_mem.CPUReadMapping(r_PC++) + r_X);
 }
 u16 sfot::AM_ZpgY(nesbus& _mem)
 {
 	// Zero-page indirect addressing r_Y
-	return (u8)(_mem[r_PC++] + r_Y);
+	return (u8)(_mem.CPUReadMapping(r_PC++) + r_Y);
 }
 
 void sfot::O_LDA(u16& _addr, nesbus& _mem)
 {
 	// Load accumulator
-	r_A = _mem[_addr];
+	r_A = _mem.CPUReadMapping(_addr);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_A);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_A >> (u8)r_SRSs::N);
@@ -88,7 +87,7 @@ void sfot::O_LDA(u16& _addr, nesbus& _mem)
 void sfot::O_LDX(u16& _addr, nesbus& _mem)
 {
 	// Load X register
-	r_X = _mem[_addr];
+	r_X = _mem.CPUReadMapping(_addr);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_X);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_X >> (u8)r_SRSs::N);
@@ -96,7 +95,7 @@ void sfot::O_LDX(u16& _addr, nesbus& _mem)
 void sfot::O_LDY(u16& _addr, nesbus& _mem)
 {
 	// Load Y register
-	r_Y = _mem[_addr];
+	r_Y = _mem.CPUReadMapping(_addr);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_Y);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_Y >> (u8)r_SRSs::N);
@@ -104,17 +103,17 @@ void sfot::O_LDY(u16& _addr, nesbus& _mem)
 void sfot::O_STA(u16& _addr, nesbus& _mem)
 {
 	// Send accumulator contents to memory
-	_mem[_addr] = (r_A);
+	_mem.CPUWriteMapping(_addr, r_A);
 }
 void sfot::O_STX(u16& _addr, nesbus& _mem)
 {
 	// Send X register contents to memory
-	_mem[_addr] = (r_X);
+	_mem.CPUWriteMapping(_addr, r_X);
 }
 void sfot::O_STY(u16& _addr, nesbus& _mem)
 {
 	// Send Y register contents to memory
-	_mem[_addr] = (r_Y);
+	_mem.CPUWriteMapping(_addr, r_Y);
 }
 void sfot::O_TAX(u16& _addr, nesbus& _mem)
 {
@@ -165,19 +164,19 @@ void sfot::O_PHA(u16& _addr, nesbus& _mem)
 {
 	// Push accumulator to the stack
 	u16 addr = 0x0100 | r_S; --r_S;
-	_mem[addr] = (r_A);
+	_mem.CPUWriteMapping(addr, r_A);
 }
 void sfot::O_PHP(u16& _addr, nesbus& _mem)
 {
 	// Push status register to the stack
 	u16 addr = 0x0100 | r_S; --r_S;
-	_mem[addr] = (r_SR);
+	_mem.CPUWriteMapping(addr, r_SR);
 }
 void sfot::O_PLA(u16& _addr, nesbus& _mem)
 {
 	// Pop top from stack to accumulator
 	u16 addr = 0x0100 | ++r_S;
-	r_A = _mem[addr];
+	r_A = _mem.CPUReadMapping(addr);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_A);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_A >> (u8)r_SRSs::N);
@@ -186,12 +185,12 @@ void sfot::O_PLP(u16& _addr, nesbus& _mem)
 {
 	// Pop top from stack to status register
 	u16 addr = 0x0100 | ++r_S;
-	r_SR = _mem[addr] | (u8)r_SRS::S;
+	r_SR = _mem.CPUReadMapping(addr) | (u8)r_SRS::S;
 }
 void sfot::O_AND(u16& _addr, nesbus& _mem)
 {
 	// Logical AND on accumulator and memory
-	r_A &= _mem[_addr];
+	r_A &= _mem.CPUReadMapping(_addr);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_A);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_A >> (u8)r_SRSs::N);
@@ -199,7 +198,7 @@ void sfot::O_AND(u16& _addr, nesbus& _mem)
 void sfot::O_EOR(u16& _addr, nesbus& _mem)
 {
 	// Exclusive OR on accumulator and memory
-	r_A ^= _mem[_addr];
+	r_A ^= _mem.CPUReadMapping(_addr);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_A);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_A >> (u8)r_SRSs::N);
@@ -207,7 +206,7 @@ void sfot::O_EOR(u16& _addr, nesbus& _mem)
 void sfot::O_ORA(u16& _addr, nesbus& _mem)
 {
 	// Inclusive OR on accumulator and memory
-	r_A |= _mem[_addr];
+	r_A |= _mem.CPUReadMapping(_addr);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_A);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_A >> (u8)r_SRSs::N);
@@ -215,7 +214,7 @@ void sfot::O_ORA(u16& _addr, nesbus& _mem)
 void sfot::O_BIT(u16& _addr, nesbus& _mem)
 {
 	// Bit test on accumulator and memory
-	u8 test = r_A & _mem[_addr];
+	u8 test = r_A & _mem.CPUReadMapping(_addr);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !test);
 	BIT_SET(r_SR, (u8)r_SRSs::O, !!(test & (u8)r_SRS::O));
@@ -224,7 +223,7 @@ void sfot::O_BIT(u16& _addr, nesbus& _mem)
 void sfot::O_ADC(u16& _addr, nesbus& _mem)
 {
 	// Add with carry (accumulator)
-	u8 operand = _mem[_addr];
+	u8 operand = _mem.CPUReadMapping(_addr);
 	u16 adc = r_A + operand + (r_SR & (u8)r_SRS::C);
 	switch (r_SR & (u8)r_SRS::D)
 	{
@@ -247,14 +246,15 @@ void sfot::O_SBC(u16& _addr, nesbus& _mem)
 {
 	// Subtract with carry (accumulator)
 	// Invert the bits, little sneaky memory manip ;)
-	_mem[_addr] = (~_mem[_addr]);
+	u8 neg = ~_mem.CPUReadMapping(_addr);
+	_mem.CPUWriteMapping(_addr, neg);
 	sfot::O_ADC(_addr, _mem);
-	_mem[_addr] = (~_mem[_addr]);
+	_mem.CPUWriteMapping(_addr, ~neg);
 }
 void sfot::O_CMP(u16& _addr, nesbus& _mem)
 {
 	// Compare accumulator with memory
-	u8 operand = _mem[_addr];
+	u8 operand = _mem.CPUReadMapping(_addr);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::C, r_A >= operand);
 	BIT_SET(r_SR, (u8)r_SRSs::Z, r_A == operand);
@@ -263,7 +263,7 @@ void sfot::O_CMP(u16& _addr, nesbus& _mem)
 void sfot::O_CPX(u16& _addr, nesbus& _mem)
 {
 	// Compare X register with memory
-	u8 operand = _mem[_addr];
+	u8 operand = _mem.CPUReadMapping(_addr);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::C, r_X >= operand);
 	BIT_SET(r_SR, (u8)r_SRSs::Z, r_X == operand);
@@ -272,7 +272,7 @@ void sfot::O_CPX(u16& _addr, nesbus& _mem)
 void sfot::O_CPY(u16& _addr, nesbus& _mem)
 {
 	// Compare Y register with memory
-	u8 operand = _mem[_addr];
+	u8 operand = _mem.CPUReadMapping(_addr);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::C, r_Y >= operand);
 	BIT_SET(r_SR, (u8)r_SRSs::Z, r_Y == operand);
@@ -281,8 +281,8 @@ void sfot::O_CPY(u16& _addr, nesbus& _mem)
 void sfot::O_INC(u16& _addr, nesbus& _mem)
 {
 	// Increment value at memory address
-	u8 operand = _mem[_addr]; ++operand;
-	_mem[_addr] = (operand);
+	u8 operand = _mem.CPUReadMapping(_addr); ++operand;
+	_mem.CPUWriteMapping(_addr, operand);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !operand);
 	BIT_SET(r_SR, (u8)r_SRSs::N, operand >> (u8)r_SRSs::N);
@@ -306,8 +306,8 @@ void sfot::O_INY(u16& _addr, nesbus& _mem)
 void sfot::O_DEC(u16& _addr, nesbus& _mem)
 {
 	// Decrement value at memory address
-	u8 operand = _mem[_addr]; --operand;
-	_mem[_addr] = (operand);
+	u8 operand = _mem.CPUReadMapping(_addr); --operand;
+	_mem.CPUWriteMapping(_addr, operand);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !operand);
 	BIT_SET(r_SR, (u8)r_SRSs::N, operand >> (u8)r_SRSs::N);
@@ -331,10 +331,10 @@ void sfot::O_DEY(u16& _addr, nesbus& _mem)
 void sfot::O_ASL(u16& _addr, nesbus& _mem)
 {
 	// Arithmetic shift left (memory)
-	u8 operand = _mem[_addr];
+	u8 operand = _mem.CPUReadMapping(_addr);
 	// Set carry
 	BIT_SET(r_SR, (u8)r_SRSs::C, (operand & 0x80) >> 7); operand <<= 1;
-	_mem[_addr] = (operand);
+	_mem.CPUWriteMapping(_addr, operand);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !operand);
 	BIT_SET(r_SR, (u8)r_SRSs::N, operand >> (u8)r_SRSs::N);
@@ -351,10 +351,10 @@ void sfot::O_ASL_A(u16& _addr, nesbus& _mem)
 void sfot::O_LSR(u16& _addr, nesbus& _mem)
 {
 	// Logical shift right (memory)
-	u8 operand = _mem[_addr];
+	u8 operand = _mem.CPUReadMapping(_addr);
 	// Set carry
 	BIT_SET(r_SR, (u8)r_SRSs::C, operand & 0x01); operand >>= 1;
-	_mem[_addr] = (operand);
+	_mem.CPUWriteMapping(_addr, operand);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !operand);
 	BIT_SET(r_SR, (u8)r_SRSs::N, operand >> (u8)r_SRSs::N);
@@ -371,12 +371,12 @@ void sfot::O_LSR_A(u16& _addr, nesbus& _mem)
 void sfot::O_ROL(u16& _addr, nesbus& _mem)
 {
 	// Rotate left (memory)
-	u8 operand = _mem[_addr];
+	u8 operand = _mem.CPUReadMapping(_addr);
 	u8 oldCarry = r_SR & (u8)r_SRS::C;
 	// Set carry
 	BIT_SET(r_SR, (u8)r_SRSs::C, (operand & 0x80) >> 7); operand <<= 1;
 	operand |= oldCarry;
-	_mem[_addr] = (operand);
+	_mem.CPUWriteMapping(_addr, operand);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !operand);
 	BIT_SET(r_SR, (u8)r_SRSs::N, operand >> (u8)r_SRSs::N);
@@ -395,12 +395,12 @@ void sfot::O_ROL_A(u16& _addr, nesbus& _mem)
 void sfot::O_ROR(u16& _addr, nesbus& _mem)
 {
 	// Rotate right (memory)
-	u8 operand = _mem[_addr];
+	u8 operand = _mem.CPUReadMapping(_addr);
 	u8 oldCarry = r_SR & (u8)r_SRS::C;
 	// Set carry
 	BIT_SET(r_SR, (u8)r_SRSs::C, operand & 0x01); operand >>= 1;
 	operand |= oldCarry;
-	_mem[_addr] = (operand);
+	_mem.CPUWriteMapping(_addr, operand);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !operand);
 	BIT_SET(r_SR, (u8)r_SRSs::N, operand >> (u8)r_SRSs::N);
@@ -426,18 +426,18 @@ void sfot::O_JSR(u16& _addr, nesbus& _mem)
 	// Jump to subroutine
 	--r_PC;
 	u16 addr = 0x0100 | r_S; --r_S;
-	_mem[addr] = ((r_PC >> 8) & 0xFF);
+	_mem.CPUWriteMapping(addr, (r_PC >> 8) & 0xFF);
 	addr = 0x0100 | r_S; --r_S;
-	_mem[addr] = (r_PC & 0xFF);
+	_mem.CPUWriteMapping(addr, r_PC & 0xFF);
 	r_PC = _addr;
 }
 void sfot::O_RTS(u16& _addr, nesbus& _mem)
 {
 	// Return from subroutine, get from stack
 	u16 addr = 0x0100 | ++r_S;
-	r_PC = _mem[addr]; 
+	r_PC = _mem.CPUReadMapping(addr); 
 	addr = 0x0100 | ++r_S;
-	r_PC |= (_mem[addr]) << 8; ++r_PC;
+	r_PC |= (_mem.CPUReadMapping(addr)) << 8; ++r_PC;
 }
 void sfot::O_BCC(u16& _addr, nesbus& _mem)
 {
@@ -519,13 +519,13 @@ void sfot::O_BRK(u16& _addr, nesbus& _mem)
 	// Break (force an interrupt)
 	// Save PC and SR to stack
 	u16 addr = 0x0100 | r_S; --r_S;
-	_mem[addr] = ((r_PC >> 8) & 0xFF);
+	_mem.CPUWriteMapping(addr, (r_PC >> 8) & 0xFF);
 	addr = 0x0100 | r_S; --r_S;
-	_mem[addr] = (r_PC & 0xFF);
+	_mem.CPUWriteMapping(addr, r_PC & 0xFF);
 	addr = 0x0100 | r_S; --r_S;
-	_mem[addr] = (r_SR);
+	_mem.CPUWriteMapping(addr, r_SR);
 	// Go to location
-	r_PC = _mem[e_BRK_L] + (_mem[e_BRK_H] << 8);
+	r_PC = _mem.CPUReadMapping(e_BRK_L) + (_mem.CPUReadMapping(e_BRK_H) << 8);
 	// Set appropriate status flags
 	r_SR |= (u8)r_SRS::B;
 }
@@ -534,12 +534,12 @@ void sfot::O_RTI(u16& _addr, nesbus& _mem)
 	// Return from interrupt
 	// Get SR from stack
 	u16 addr = 0x0100 | ++r_S;
-	r_SR = _mem[addr];
+	r_SR = _mem.CPUReadMapping(addr);
 	// Get PC from stack
 	addr = 0x0100 | ++r_S;
-	r_PC = _mem[addr];
+	r_PC = _mem.CPUReadMapping(addr);
 	addr = 0x0100 | ++r_S;
-	r_PC |= (_mem[addr]) << 8; 
+	r_PC |= (_mem.CPUReadMapping(addr)) << 8; 
 }
 
 u64 sfot::EmulateCycles(nesbus& _memory, u64& _cycleAmount)
@@ -554,7 +554,7 @@ u64 sfot::EmulateCycles(nesbus& _memory, u64& _cycleAmount)
 void sfot::EmulateStep(nesbus& _memory)
 {
 	// Get opcode from memory block
-	u8 opcode = _memory[r_PC]; ++r_PC;
+	u8 opcode = _memory.CPUReadMapping(r_PC); ++r_PC;
 
 	u16 addr = 0;
 	switch (e_OCAM[opcode])
