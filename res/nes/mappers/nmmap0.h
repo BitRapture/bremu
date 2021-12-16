@@ -1,6 +1,8 @@
 #ifndef _NM_MAP_0_H_
 #define _NM_MAP_0_H_
 
+#include <iostream>
+
 #include "nesmapper.h"
 
 // NROM (iNes Mapper 0)
@@ -13,7 +15,7 @@ public: // Method overriding
 	bool CPURead(u16& _addr) override
 	{
 		if (_addr < 0x6000) { return false; }
-		if (_addr < 0x8000) { _addr = m_PRGSize + (_addr - 0x6000); return true; } // RAM
+		if (_addr < 0x8000) { _addr = m_PRGSize + (_addr - 0x6000); return true; } // PRG RAM 0x6000 to 0x7FFF
 		_addr = _addr & m_Mirroring; // 0x8000 - 0xFFFF
 		return true;
 	}

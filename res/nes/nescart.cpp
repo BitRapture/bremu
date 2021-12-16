@@ -3,8 +3,9 @@
 void nescart::LoadCartridge(const char* _path)
 {
 	// Unload previous cart data
-	delete m_PRGROM; m_PRGROM = nullptr;
-	delete m_CHRROM; m_CHRROM = nullptr;
+	delete[] m_PRGROM; m_PRGROM = nullptr;
+	delete[] m_CHRROM; m_CHRROM = nullptr;
+	m_MetaData[0] = 0;
 	m_Loaded = false;
 
 	// Load and read metadata from file
@@ -24,7 +25,7 @@ void nescart::LoadCartridge(const char* _path)
 	// Get CHR size
 	u32 iNes2CHR = (m_MetaData[9] & 0xF0) >> 4;
 	m_CHRROMSize = (iNes2 ? (iNes2CHR == 0xF ? (1 << ((m_MetaData[5] & 0xFC) >> 2)) * (((m_MetaData[5] & 0x3) * 2) + 1) : (iNes2CHR << 8) | m_MetaData[5]) : m_MetaData[5] * 8192);
-	if (m_CHRROMSize == 0) { m_CHRROMSize = (iNes2 ? (m_MetaData[11] & 0xF ? 64 << (m_MetaData[11] & 0xF) : 64 << ((m_MetaData[11] & 0xF0) >> 4)) : 8192); }
+	if (m_CHRROMSize == 0) { m_CHRROMSize = (iNes2 ? (m_MetaData[11] & 0xF ? 64 << (m_MetaData[11] & 0xF) : 64 << (m_MetaData[11] >> 4)) : 8192); }
 
 	// Assemble mapper type
 	m_MapperType = (iNes2 ? (m_MetaData[8] & 0xF) << 8 : 0) | (m_MetaData[7] & 0xF0) | (m_MetaData[6] >> 4);
@@ -33,11 +34,11 @@ void nescart::LoadCartridge(const char* _path)
 	// Skip trainer (todo: add modified carts)
 	if (m_MetaData[6] & 0x4) { cartSource.seekg(std::ios::cur + 512); }
 
-	// Check if cartridge has internal RAM (0x6000 - 0x7FFF)
-	m_CRAMSize = (m_MetaData[6] & 0x2 ? m_CHRROMSize = 0x1FFF : 0);
+	// Check if cartridge has internal PRG RAM (0x6000 - 0x7FFF)
+	m_PRGRAMSize = (m_MetaData[6] & 0x2 ? 8192 : 0); // Allocate 8KB of memory
 
 	// Allocate PRG ROM
-	m_PRGROM = new u8[m_PRGROMSize + m_CRAMSize]; // Combine PRG and CRAM as cpu uses both of these
+	m_PRGROM = new u8[m_PRGROMSize + m_PRGRAMSize]; // Combine PRG ROM and PRG RAM as cpu uses both of these
 	cartSource.read((s8*)m_PRGROM, m_PRGROMSize);
 	// Allocate CHR ROM
 	m_CHRROM = new u8[m_CHRROMSize];

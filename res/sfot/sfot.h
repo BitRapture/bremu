@@ -1,6 +1,8 @@
 #ifndef _SFOT_H_
 #define _SFOT_H_
 
+#include <functional>
+
 #include "defs.h"
 #include "../nes/nesbus.h"
 
@@ -31,15 +33,16 @@ private: // Registers
 	u16 r_PC{ 0x0 };
 
 private: // Emulation Variables
-	// Cycle count
-	u64 e_Cycles{ 0 };
-
 	// Opcode instruction jump-table
 	void (sfot::* e_OCJT[256])(u16&, nesbus&);
 	// Opcode addressing modes jump-table
 	u8 e_OCAM[256];
 	// Addressing mode instruction jump-table
 	u16 (sfot::* e_AMJT[10])(nesbus&);
+	// Clock cycle ticks table
+	u32 e_CCTT[256];
+	// Page boundary crossed flag
+	bool e_PBC{ false };
 
 public: // Configurable cpu vectors
 	// NMI vector (High)
@@ -174,19 +177,20 @@ public: // Getters/Setters
 	// Set program counter
 	void SetProgramCounter(u16 _address) { r_PC = _address; };
 
-	// Get cycle count
-	const u64* GetCycleCount() { return &e_Cycles; };
-
 public: // Emulation
-	/// @brief Emulate the sfot up to a certain amount of cycles
-	/// @param _memory The memory for the sfot
-	/// @param _cycleAmount The amount of cycles before the processor will stop running
-	/// @return The amount of cycles the sfot went over by 
-	u64 EmulateCycles(nesbus& _memory, u64& _cycleAmount);
-
 	/// @brief Emulate the sfot for one step
 	/// @param _memory The memory for the sfot
 	void EmulateStep(nesbus& _memory);
+
+	/// @brief Reset the sfot
+	void Reset(nesbus& _memory);
+
+	/// @brief Generate a Non Maskable Interrupt request
+	/// @param _memory The memory for the sfot
+	void NMI(nesbus& _memory);
+
+	/// @brief Tick for every cycle
+	std::function<void(void)> Tick;
 
 public: // Instantiation
 	// Default construction
