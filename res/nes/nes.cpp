@@ -11,7 +11,7 @@ void nes::PPUFrame()
 	SDL_RenderClear(m_Context);
 	u32* pixels = nullptr; int pitch;
 	SDL_LockTexture(m_PPUScreen, 0, (void**)&pixels, &pitch);
-	for (u32 i = 0; i < 61440; ++i) // 256 * 240 = 61440
+	for (u32 i = 0; i < 61440; ++i) // 256 * 240 = 61440 (screen resolution)
 	{
 		pixels[i] = (m_PPU.m_Screen[i] << 8) | 0xFF;
 	}
@@ -31,7 +31,7 @@ void nes::Clock()
 void nes::Run()
 {
 	// Load game into cartridge port
-	m_Cartridge.LoadCartridge("./carts/donkeykong.nes");
+	m_Cartridge.LoadCartridge("./carts/nestest.nes");
 	if (!m_Cartridge.IsLoaded()) { return; }
 	m_CPU.Reset(m_Bus);
 

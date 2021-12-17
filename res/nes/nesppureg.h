@@ -22,6 +22,9 @@ public: // Registers
 public: // Getters & Setters
 	const bool GetVBLANK() { return (r_PPUCTRL & 0x80); }
 	const bool GetVRAMInc() { return (r_PPUCTRL & 0x04); }
+	
+	const bool ShowBackground() { return (r_PPUMASK & 0x08); }
+	const bool ShowSprites() { return (r_PPUMASK & 0x10); }
 };
 
 #endif // !_NESPPUREG_H_

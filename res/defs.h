@@ -3,16 +3,18 @@
 
 /// Definitions for sfot
 
-// 8 bits
-using u8 = unsigned char;
 // 8 bits signed
 using s8 = char;
+// 32 bits signed
+using s32 = int;
+// 8 bits
+using u8 = unsigned char;
 // 16 bits
 using u16 = unsigned short;
 // 32 bits
 using u32 = unsigned int;
 // 64 bits
-using u64 = unsigned long int;
+using u64 = unsigned long;
 
 // Common sfot memory sizes (kibibytes)
 enum class sfotcmem : u32 { M1K = 1024, M8K = 8192, M16K = 16384, M32K = 32768, M64K = 65535 };
