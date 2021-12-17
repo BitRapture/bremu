@@ -3,7 +3,7 @@
 
 #include <functional>
 
-#include "defs.h"
+#include "../defs.h"
 #include "../nes/nesbus.h"
 
 /// @brief An Emulated 6502 Processor

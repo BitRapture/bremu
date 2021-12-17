@@ -1,7 +1,7 @@
 #include <SDL.h>
 #include <iostream>
 
-#include "res/at2/nes/nes.h"
+#include "res/nes/nes.h"
 
 int main(int argc, char** argv)
 {
@@ -15,6 +15,5 @@ int main(int argc, char** argv)
 
 	SDL_DestroyRenderer(context);
 	SDL_DestroyWindow(window);
-	SDL_Quit();
 	return 0;
 }
