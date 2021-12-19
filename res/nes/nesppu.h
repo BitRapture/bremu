@@ -39,7 +39,7 @@ private: // Internal Components
 
 public: // Public variables
 	// Full NES screen resolution
-	u8* m_Screen{ nullptr };
+	u32* m_Screen{ nullptr };
 
 	// Memory mapped registers
 	nesppureg m_Reg;

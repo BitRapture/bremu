@@ -37,7 +37,7 @@ void nesppu::EmulateCycle(nesbus& _memory)
 nesppu::nesppu()
 {
 	// Create screen
-	m_Screen = new u8[256 * 240]{ 0 };
+	m_Screen = new u32[256 * 240]{ 0 };
 }
 
 nesppu::~nesppu()

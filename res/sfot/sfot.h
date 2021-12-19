@@ -1,6 +1,9 @@
 #ifndef _SFOT_H_
 #define _SFOT_H_
 
+#include <string>
+#include <sstream>
+#include <iomanip>
 #include <functional>
 
 #include "../defs.h"
@@ -176,6 +179,8 @@ public: // Getters/Setters
 	const u16& GetProgramCounter() { return r_PC; };
 	// Set program counter
 	void SetProgramCounter(u16 _address) { r_PC = _address; };
+	// Get debug information
+	std::string GetDebugInfo();
 
 public: // Emulation
 	/// @brief Emulate the sfot for one step

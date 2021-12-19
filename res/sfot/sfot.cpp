@@ -1,7 +1,5 @@
 #include "sfot.h"
 
-#include <iostream>
-
 // Macro: set specific bit 
 #define BIT_SET(_u, _n, _r) _u = (_u & ~(1 << _n)) | ((_r) << _n)
 /*
@@ -38,8 +36,8 @@ u16 sfot::AM_Ind(nesbus& _mem)
 {
 	// Get address indirectly from next two bytes
 	u16 addr = _mem.CPURead(r_PC); ++r_PC;
-	addr |= (_mem.CPURead(r_PC) << 8); ++r_PC;
-	return (u16)(_mem.CPURead(addr) | (_mem.CPURead((u16)(addr + 1)) << 8));
+	addr |= (u16)(_mem.CPURead(r_PC) << 8); ++r_PC;
+	return (u16)(_mem.CPURead(addr) | (u16)(_mem.CPURead((((addr & 0x00FF) == 0x00FF) ? (addr & 0xFF00) : (addr + 1))) << 8)); // Simulate hardware page boundary bug
 }
 u16 sfot::AM_XInd(nesbus& _mem)
 {
@@ -51,15 +49,15 @@ u16 sfot::AM_IndY(nesbus& _mem)
 {
 	// Get address from the _mem(zero-page) + r_Y
 	u16 zpg = _mem.CPURead(r_PC); ++r_PC;
-	u16 addr = (_mem.CPURead(zpg) | (_mem.CPURead(zpg + 1) << 8));
+	u16 addr = (_mem.CPURead(zpg & 0xFF) | (u16)(_mem.CPURead((zpg + 1) & 0xFF) << 8));
 	u16 iaddr = addr + r_Y; e_PBC = ((addr & 0xFF00) != (iaddr & 0xFF00)); // Compare page boundaries for +1 cycle
 	return iaddr;
 }
 u16 sfot::AM_Rel(nesbus& _mem)
 {
 	// For branches, next byte is a signed offset for r_PC
-	u16 addr = r_PC; 
-	u16 iaddr = addr + (s8)(_mem.CPURead(r_PC)) + 1; ++r_PC;
+	u16 addr = r_PC + 1;
+	u16 iaddr = addr + (s8)(_mem.CPURead(r_PC)); ++r_PC;
 	e_PBC = ((addr & 0xFF00) != (iaddr & 0xFF00)); // Compare page boundaries for +1 cycle
 	return iaddr;
 }
@@ -86,8 +84,6 @@ void sfot::O_LDA(u16& _addr, nesbus& _mem)
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_A);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_A >> (u8)r_SRSs::N);
-	// Add extra tick
-	if (e_PBC) { Tick(); }
 }
 void sfot::O_LDX(u16& _addr, nesbus& _mem)
 {
@@ -96,8 +92,6 @@ void sfot::O_LDX(u16& _addr, nesbus& _mem)
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_X);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_X >> (u8)r_SRSs::N);
-	// Add extra tick
-	if (e_PBC) { Tick(); }
 }
 void sfot::O_LDY(u16& _addr, nesbus& _mem)
 {
@@ -106,23 +100,24 @@ void sfot::O_LDY(u16& _addr, nesbus& _mem)
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_Y);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_Y >> (u8)r_SRSs::N);
-	// Add extra tick
-	if (e_PBC) { Tick(); }
 }
 void sfot::O_STA(u16& _addr, nesbus& _mem)
 {
 	// Send accumulator contents to memory
-	_mem.CPUWrite(_addr, r_A);
+	_mem.CPUWrite(_addr, r_A); 
+	e_PBC = false;
 }
 void sfot::O_STX(u16& _addr, nesbus& _mem)
 {
 	// Send X register contents to memory
-	_mem.CPUWrite(_addr, r_X);
+	_mem.CPUWrite(_addr, r_X); 
+	e_PBC = false;
 }
 void sfot::O_STY(u16& _addr, nesbus& _mem)
 {
 	// Send Y register contents to memory
-	_mem.CPUWrite(_addr, r_Y);
+	_mem.CPUWrite(_addr, r_Y); 
+	e_PBC = false;
 }
 void sfot::O_TAX(u16& _addr, nesbus& _mem)
 {
@@ -179,7 +174,9 @@ void sfot::O_PHP(u16& _addr, nesbus& _mem)
 {
 	// Push status register to the stack
 	u16 addr = 0x0100 | r_S; --r_S;
-	_mem.CPUWrite(addr, r_SR);
+	// Set appropriate status flags
+	u8 r_SX = r_SR | (u8)r_SRS::S | (u8)r_SRS::B; // Used for interrupts
+	_mem.CPUWrite(addr, r_SX);
 }
 void sfot::O_PLA(u16& _addr, nesbus& _mem)
 {
@@ -189,12 +186,16 @@ void sfot::O_PLA(u16& _addr, nesbus& _mem)
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_A);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_A >> (u8)r_SRSs::N);
+	BIT_SET(r_SR, (u8)r_SRSs::B, 0);
 }
 void sfot::O_PLP(u16& _addr, nesbus& _mem)
 {
 	// Pop top from stack to status register
 	u16 addr = 0x0100 | ++r_S;
-	r_SR = _mem.CPURead(addr) | (u8)r_SRS::S;
+	r_SR = _mem.CPURead(addr);
+	// Set appropriate status flags
+	BIT_SET(r_SR, (u8)r_SRSs::B, 0);
+	BIT_SET(r_SR, (u8)r_SRSs::S, 1);
 }
 void sfot::O_AND(u16& _addr, nesbus& _mem)
 {
@@ -203,8 +204,6 @@ void sfot::O_AND(u16& _addr, nesbus& _mem)
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_A);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_A >> (u8)r_SRSs::N);
-	// Add extra tick
-	if (e_PBC) { Tick(); }
 }
 void sfot::O_EOR(u16& _addr, nesbus& _mem)
 {
@@ -213,8 +212,6 @@ void sfot::O_EOR(u16& _addr, nesbus& _mem)
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_A);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_A >> (u8)r_SRSs::N);
-	// Add extra tick
-	if (e_PBC) { Tick(); }
 }
 void sfot::O_ORA(u16& _addr, nesbus& _mem)
 {
@@ -223,17 +220,16 @@ void sfot::O_ORA(u16& _addr, nesbus& _mem)
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_A);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_A >> (u8)r_SRSs::N);
-	// Add extra tick
-	if (e_PBC) { Tick(); }
 }
 void sfot::O_BIT(u16& _addr, nesbus& _mem)
 {
 	// Bit test on accumulator and memory
-	u8 test = r_A & _mem.CPURead(_addr);
+	u8 temp = _mem.CPURead(_addr);
+	u8 btest = r_A & temp;
 	// Set appropriate status flags
-	BIT_SET(r_SR, (u8)r_SRSs::Z, !test);
-	BIT_SET(r_SR, (u8)r_SRSs::O, !!(test & (u8)r_SRS::O));
-	BIT_SET(r_SR, (u8)r_SRSs::N, r_A >> (u8)r_SRSs::N);
+	BIT_SET(r_SR, (u8)r_SRSs::Z, !btest);
+	BIT_SET(r_SR, (u8)r_SRSs::O, (temp & (u8)r_SRS::O) != 0);
+	BIT_SET(r_SR, (u8)r_SRSs::N, temp >> (u8)r_SRSs::N);
 }
 void sfot::O_ADC(u16& _addr, nesbus& _mem)
 {
@@ -256,8 +252,6 @@ void sfot::O_ADC(u16& _addr, nesbus& _mem)
 		r_A = adc & 0xFF;
 		break;
 	}
-	// Add extra tick
-	if (e_PBC) { Tick(); }
 }
 void sfot::O_SBC(u16& _addr, nesbus& _mem)
 {
@@ -276,8 +270,6 @@ void sfot::O_CMP(u16& _addr, nesbus& _mem)
 	BIT_SET(r_SR, (u8)r_SRSs::C, r_A >= operand);
 	BIT_SET(r_SR, (u8)r_SRSs::Z, r_A == operand);
 	BIT_SET(r_SR, (u8)r_SRSs::N, !!((u8)(r_A - operand) & (u8)r_SRS::N));
-	// Add extra tick
-	if (e_PBC) { Tick(); }
 }
 void sfot::O_CPX(u16& _addr, nesbus& _mem)
 {
@@ -418,7 +410,7 @@ void sfot::O_ROR(u16& _addr, nesbus& _mem)
 	u8 oldCarry = r_SR & (u8)r_SRS::C;
 	// Set carry
 	BIT_SET(r_SR, (u8)r_SRSs::C, operand & 0x01); operand >>= 1;
-	operand |= oldCarry;
+	operand |= (oldCarry << (u8)r_SRSs::N);
 	_mem.CPUWrite(_addr, operand);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !operand);
@@ -430,7 +422,7 @@ void sfot::O_ROR_A(u16& _addr, nesbus& _mem)
 	u8 oldCarry = r_SR & (u8)r_SRS::C;
 	// Set carry
 	BIT_SET(r_SR, (u8)r_SRSs::C, r_A & 0x01); r_A >>= 1;
-	r_A |= oldCarry;
+	r_A |= (oldCarry << (u8)r_SRSs::N);
 	// Set appropriate status flags
 	BIT_SET(r_SR, (u8)r_SRSs::Z, !r_A);
 	BIT_SET(r_SR, (u8)r_SRSs::N, r_A >> (u8)r_SRSs::N);
@@ -464,9 +456,9 @@ void sfot::O_BCC(u16& _addr, nesbus& _mem)
 	if (!(r_SR & (u8)r_SRS::C))
 	{
 		r_PC = _addr;
-		if (e_PBC) { Tick(); }
 		Tick();
 	}
+	else { e_PBC = false; }
 }
 void sfot::O_BCS(u16& _addr, nesbus& _mem)
 {
@@ -474,9 +466,9 @@ void sfot::O_BCS(u16& _addr, nesbus& _mem)
 	if (r_SR & (u8)r_SRS::C)
 	{
 		r_PC = _addr;
-		if (e_PBC) { Tick(); }
 		Tick();
 	}
+	else { e_PBC = false; }
 }
 void sfot::O_BEQ(u16& _addr, nesbus& _mem)
 {
@@ -484,9 +476,9 @@ void sfot::O_BEQ(u16& _addr, nesbus& _mem)
 	if (r_SR & (u8)r_SRS::Z)
 	{
 		r_PC = _addr;
-		if (e_PBC) { Tick(); }
 		Tick();
 	}
+	else { e_PBC = false; }
 }
 void sfot::O_BMI(u16& _addr, nesbus& _mem)
 {
@@ -494,9 +486,9 @@ void sfot::O_BMI(u16& _addr, nesbus& _mem)
 	if (r_SR & (u8)r_SRS::N)
 	{
 		r_PC = _addr;
-		if (e_PBC) { Tick(); }
 		Tick();
 	}
+	else { e_PBC = false; }
 }
 void sfot::O_BNE(u16& _addr, nesbus& _mem)
 {
@@ -504,9 +496,9 @@ void sfot::O_BNE(u16& _addr, nesbus& _mem)
 	if (!(r_SR & (u8)r_SRS::Z))
 	{
 		r_PC = _addr;
-		if (e_PBC) { Tick(); }
 		Tick();
 	}
+	else { e_PBC = false; }
 }
 void sfot::O_BPL(u16& _addr, nesbus& _mem)
 {
@@ -514,9 +506,9 @@ void sfot::O_BPL(u16& _addr, nesbus& _mem)
 	if (!(r_SR & (u8)r_SRS::N))
 	{
 		r_PC = _addr;
-		if (e_PBC) { Tick(); }
 		Tick();
 	}
+	else { e_PBC = false; }
 }
 void sfot::O_BVC(u16& _addr, nesbus& _mem)
 {
@@ -524,9 +516,9 @@ void sfot::O_BVC(u16& _addr, nesbus& _mem)
 	if (!(r_SR & (u8)r_SRS::O))
 	{
 		r_PC = _addr;
-		if (e_PBC) { Tick(); }
 		Tick();
 	}
+	else { e_PBC = false; }
 }
 void sfot::O_BVS(u16& _addr, nesbus& _mem)
 {
@@ -534,9 +526,9 @@ void sfot::O_BVS(u16& _addr, nesbus& _mem)
 	if (r_SR & (u8)r_SRS::O)
 	{
 		r_PC = _addr;
-		if (e_PBC) { Tick(); }
 		Tick();
 	}
+	else { e_PBC = false; }
 }
 void sfot::O_CLC(u16& _addr, nesbus& _mem)
 {
@@ -581,12 +573,12 @@ void sfot::O_BRK(u16& _addr, nesbus& _mem)
 	_mem.CPUWrite(addr, (r_PC >> 8) & 0xFF);
 	addr = 0x0100 | r_S; --r_S;
 	_mem.CPUWrite(addr, r_PC & 0xFF);
+	// Set appropriate status flags
+	u8 r_SX = r_SR | (u8)r_SRS::B | (u8)r_SRS::S;
 	addr = 0x0100 | r_S; --r_S;
-	_mem.CPUWrite(addr, r_SR);
+	_mem.CPUWrite(addr, r_SX);
 	// Go to location
 	r_PC = _mem.CPURead(e_BRK_L) + (_mem.CPURead(e_BRK_H) << 8);
-	// Set appropriate status flags
-	r_SR |= (u8)r_SRS::B;
 }
 void sfot::O_RTI(u16& _addr, nesbus& _mem)
 {
@@ -594,6 +586,7 @@ void sfot::O_RTI(u16& _addr, nesbus& _mem)
 	// Get SR from stack
 	u16 addr = 0x0100 | ++r_S;
 	r_SR = _mem.CPURead(addr);
+	BIT_SET(r_SR, (u8)r_SRSs::S, 1);
 	// Get PC from stack
 	addr = 0x0100 | ++r_S;
 	r_PC = _mem.CPURead(addr);
@@ -601,20 +594,33 @@ void sfot::O_RTI(u16& _addr, nesbus& _mem)
 	r_PC |= (_mem.CPURead(addr)) << 8; 
 }
 
+std::string sfot::GetDebugInfo()
+{
+	std::stringstream info;
+	info << std::hex << (u32)r_PC <<  " A:" <<
+		std::setw(2) << std::setfill('0') << (u32)r_A << " X:" << 
+		std::setw(2) << std::setfill('0') << (u32)r_X << " Y:" << 
+		std::setw(2) << std::setfill('0') << (u32)r_Y << " P:" << 
+		std::setw(2) << std::setfill('0') << (u32)r_SR << " SP:" << 
+		std::setw(2) << std::setfill('0') << (u32)r_S;
+	return info.str();
+}
+
 void sfot::EmulateStep(nesbus& _memory)
 {
 	// Get opcode from memory block
 	u8 opcode = _memory.CPURead(r_PC); ++r_PC;
 
+	// Reset page boundary flag
+	e_PBC = false;
+
 	u16 addr = 0;
 	switch (e_OCAM[opcode])
 	{
 	case (u8)r_AM::IMM: { addr = r_PC; ++r_PC; break; } // Immediate addressing
-	case (u8)r_AM::NINST: { Tick(); Tick(); return;  break; } // No instruction to execute (NOP & out of mem)
+	case (u8)r_AM::NINST: { for (int i = 0; i < e_CCTT[opcode]; ++i) { Tick(); } return; break; } // No instruction to execute (NOP & out of mem)
 	case (u8)r_AM::NOADDR: { break; } // No address needed 
 	default:
-		// Reset page boundary flag
-		e_PBC = false;
 		// Get the address from the opcodes addressing mode
 		addr = (this->*e_AMJT[e_OCAM[opcode]])(_memory);
 	}
@@ -624,6 +630,8 @@ void sfot::EmulateStep(nesbus& _memory)
 
 	// Call the tick method X amount of cycles
 	for (int i = 0; i < e_CCTT[opcode]; ++i) { Tick(); }
+	// Add extra tick
+	if (e_PBC) { Tick(); }
 }
 
 void sfot::Reset(nesbus& _memory)
@@ -631,7 +639,12 @@ void sfot::Reset(nesbus& _memory)
 	// Set program counter to reset vector
 	r_PC = _memory.CPURead(e_RESET_L) | (_memory.CPURead(e_RESET_H) << 8);
 	BIT_SET(r_SR, (u8)r_SRSs::I, 1);
+	BIT_SET(r_SR, (u8)r_SRSs::S, 1);
 	BIT_SET(r_SR, (u8)r_SRSs::D, 0);
+	// Set stack
+	r_S = 0xFD;
+	// Tick 7 times
+	for (int i = 0; i < 7; ++i) { Tick(); }
 }
 
 void sfot::NMI(nesbus& _memory)
@@ -641,8 +654,11 @@ void sfot::NMI(nesbus& _memory)
 	_memory.CPUWrite(addr, (r_PC >> 8) & 0xFF);
 	addr = 0x0100 | r_S; --r_S;
 	_memory.CPUWrite(addr, r_PC & 0xFF);
+	// Set appropriate status flags
+	u8 r_SX = r_SR | (u8)r_SRS::S;
+	BIT_SET(r_SX, (u8)r_SRSs::B, 0);
 	addr = 0x0100 | r_S; --r_S;
-	_memory.CPUWrite(addr, r_SR);
+	_memory.CPUWrite(addr, r_SX);
 	// Set program counter to NMI vector
 	r_PC = _memory.CPURead(e_NMI_L) | (_memory.CPURead(e_NMI_H) << 8);
 	// Tick 7 times

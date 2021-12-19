@@ -20,6 +20,7 @@ private: // SDL variables
 	SDL_Texture* m_PPUScreen;
 
 private: // Emulation variables
+	u32 e_Cycles{ 0 };
 
 private: // Components
 	sfot m_CPU;
