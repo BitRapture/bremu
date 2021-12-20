@@ -20,7 +20,15 @@ const u16 nesbus::PPUGetMirroring(const u16& _addr)
 const u16 nesbus::PALGetMirroring(const u16& _addr)
 {
 	u16 addr = _addr & 0x1F;
-	if (addr == 0x10 || addr == 0x14 || addr == 0x18 || addr == 0x1C) { addr -= 0x10; }
+	switch (addr)
+	{
+	case 0x10:
+	case 0x14:
+	case 0x18:
+	case 0x1C:
+		addr -= 0x10;
+		break;
+	}
 	return addr;
 }
 

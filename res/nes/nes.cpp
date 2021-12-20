@@ -4,8 +4,7 @@
 
 void nes::CPUTick()
 {
-	++e_Cycles;
-	//for (u32 i = 0; i < 3; ++i) { m_PPU.EmulateCycle(m_Bus); }
+	for (u32 i = 0; i < 3; ++i) { m_PPU.EmulateCycle(m_Bus); }
 }
 
 void nes::PPUFrame()
@@ -25,7 +24,7 @@ void nes::PPUFrame()
 
 void nes::Clock()
 {
-	std::cout << m_CPU.GetDebugInfo() << " CYC:" << std::dec << e_Cycles << std::endl;
+	// nestest ->    std::cout << m_CPU.GetDebugInfo() << " CYC:" << std::dec << e_Cycles << std::endl; 
 
 	// Synchronize to cpu cycles (1 cpu cycle = 3 ppu cycles)
 	if (m_PPU.GetGenNMI())
@@ -39,11 +38,8 @@ void nes::Run()
 	// Load game into cartridge port
 	m_Cartridge.LoadCartridge("./carts/nestest.nes");
 	if (!m_Cartridge.IsLoaded()) { return; }
+	m_PPU.Reset();
 	m_CPU.Reset(m_Bus);
-	// RESET PPU (as cpu reset ticks ppu by 3 * 7!!!)
-	
-	m_CPU.SetProgramCounter(0xC000); // nestest (remove)
-	u32 dTicks = 0;
 
 	bool runtime = true;
 	while (runtime)
@@ -60,7 +56,6 @@ void nes::Run()
 		}
 
 		Clock();
-		if (++dTicks > 8992) { runtime = false; }
 	}
 }
 

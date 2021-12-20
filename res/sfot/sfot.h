@@ -164,6 +164,17 @@ private: // Opcodes/Instructions
 	void O_BRK(u16& _addr, nesbus& _mem);
 	void O_RTI(u16& _addr, nesbus& _mem);
 
+	// Illegal instructions
+	void O_INOP(u16& _addr, nesbus& _mem) { return; /* doesn't do anything */ }
+	void O_LAX(u16& _addr, nesbus& _mem);
+	void O_SAX(u16& _addr, nesbus& _mem);
+	void O_DCP(u16& _addr, nesbus& _mem);
+	void O_ISC(u16& _addr, nesbus& _mem);
+	void O_SLO(u16& _addr, nesbus& _mem);
+	void O_RLA(u16& _addr, nesbus& _mem);
+	void O_SRE(u16& _addr, nesbus& _mem);
+	void O_RRA(u16& _addr, nesbus& _mem);
+
 public: // Getters/Setters
 	// Get status register
 	const u8& GetStatusRegister() { return r_SR; };

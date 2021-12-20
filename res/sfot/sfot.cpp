@@ -594,6 +594,67 @@ void sfot::O_RTI(u16& _addr, nesbus& _mem)
 	r_PC |= (_mem.CPURead(addr)) << 8; 
 }
 
+void sfot::O_LAX(u16& _addr, nesbus& _mem)
+{
+	// Load both A and X from memory
+	O_LDA(_addr, _mem);
+	r_X = r_A;
+}
+
+void sfot::O_SAX(u16& _addr, nesbus& _mem)
+{
+	// AND A and X together, store to memory
+	u8 operand = r_A & r_X;
+	_mem.CPUWrite(_addr, operand);
+}
+
+void sfot::O_DCP(u16& _addr, nesbus& _mem)
+{
+	// Decrement memory and compare to accumulator
+	O_DEC(_addr, _mem);
+	O_CMP(_addr, _mem);
+	e_PBC = false;
+}
+void sfot::O_ISC(u16& _addr, nesbus& _mem)
+{
+	// Increment memory and subtract with accumulator
+	O_INC(_addr, _mem);
+	O_SBC(_addr, _mem);
+	e_PBC = false;
+}
+
+void sfot::O_SLO(u16& _addr, nesbus& _mem)
+{
+	// Shift memory left and inclusive OR to accumulator
+	O_ASL(_addr, _mem);
+	O_ORA(_addr, _mem);
+	e_PBC = false;
+}
+
+void sfot::O_RLA(u16& _addr, nesbus& _mem)
+{
+	// Rotate memory left and AND with accumulator
+	O_ROL(_addr, _mem);
+	O_AND(_addr, _mem);
+	e_PBC = false;
+}
+
+void sfot::O_SRE(u16& _addr, nesbus& _mem)
+{
+	// Shift memory left and exclusive OR to accumulator
+	O_LSR(_addr, _mem);
+	O_EOR(_addr, _mem);
+	e_PBC = false;
+}
+
+void sfot::O_RRA(u16& _addr, nesbus& _mem)
+{
+	// Rotate memory right and add with carry to accumulator
+	O_ROR(_addr, _mem);
+	O_ADC(_addr, _mem);
+	e_PBC = false;
+}
+
 std::string sfot::GetDebugInfo()
 {
 	std::stringstream info;
@@ -1354,4 +1415,313 @@ sfot::sfot()
 	e_OCAM[(u8)sfotops::RTI] = (u8)r_AM::NOADDR;
 	e_CCTT[(u8)sfotops::RTI] = 6;
 
+	// Illegal instructions
+	// *No operation
+	e_OCJT[(u8)sfotops::INOP1] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP1] = (u8)r_AM::NOADDR;
+	e_CCTT[(u8)sfotops::INOP1] = 2;
+	e_OCJT[(u8)sfotops::INOP2] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP2] = (u8)r_AM::NOADDR;
+	e_CCTT[(u8)sfotops::INOP2] = 2;
+	e_OCJT[(u8)sfotops::INOP3] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP3] = (u8)r_AM::NOADDR;
+	e_CCTT[(u8)sfotops::INOP3] = 2;
+	e_OCJT[(u8)sfotops::INOP4] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP4] = (u8)r_AM::NOADDR;
+	e_CCTT[(u8)sfotops::INOP4] = 2;
+	e_OCJT[(u8)sfotops::INOP5] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP5] = (u8)r_AM::NOADDR;
+	e_CCTT[(u8)sfotops::INOP5] = 2;
+	e_OCJT[(u8)sfotops::INOP6] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP6] = (u8)r_AM::NOADDR;
+	e_CCTT[(u8)sfotops::INOP6] = 2;
+
+	e_OCJT[(u8)sfotops::INOP7] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP7] = (u8)r_AM::IMM;
+	e_CCTT[(u8)sfotops::INOP7] = 2;
+	e_OCJT[(u8)sfotops::INOP8] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP8] = (u8)r_AM::IMM;
+	e_CCTT[(u8)sfotops::INOP8] = 2;
+	e_OCJT[(u8)sfotops::INOP9] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP9] = (u8)r_AM::IMM;
+	e_CCTT[(u8)sfotops::INOP9] = 2;
+	e_OCJT[(u8)sfotops::INOP10] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP10] = (u8)r_AM::IMM;
+	e_CCTT[(u8)sfotops::INOP10] = 2;
+	e_OCJT[(u8)sfotops::INOP11] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP11] = (u8)r_AM::IMM;
+	e_CCTT[(u8)sfotops::INOP11] = 2;
+
+	e_OCJT[(u8)sfotops::INOP12] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP12] = (u8)r_AM::ZPG;
+	e_CCTT[(u8)sfotops::INOP12] = 3;
+	e_OCJT[(u8)sfotops::INOP13] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP13] = (u8)r_AM::ZPG;
+	e_CCTT[(u8)sfotops::INOP13] = 3;
+	e_OCJT[(u8)sfotops::INOP14] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP14] = (u8)r_AM::ZPG;
+	e_CCTT[(u8)sfotops::INOP14] = 3;
+
+	e_OCJT[(u8)sfotops::INOP15] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP15] = (u8)r_AM::ZPGX;
+	e_CCTT[(u8)sfotops::INOP15] = 4;
+	e_OCJT[(u8)sfotops::INOP16] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP16] = (u8)r_AM::ZPGX;
+	e_CCTT[(u8)sfotops::INOP16] = 4;
+	e_OCJT[(u8)sfotops::INOP17] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP17] = (u8)r_AM::ZPGX;
+	e_CCTT[(u8)sfotops::INOP17] = 4;
+	e_OCJT[(u8)sfotops::INOP18] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP18] = (u8)r_AM::ZPGX;
+	e_CCTT[(u8)sfotops::INOP18] = 4;
+	e_OCJT[(u8)sfotops::INOP19] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP19] = (u8)r_AM::ZPGX;
+	e_CCTT[(u8)sfotops::INOP19] = 4;
+	e_OCJT[(u8)sfotops::INOP20] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP20] = (u8)r_AM::ZPGX;
+	e_CCTT[(u8)sfotops::INOP20] = 4;
+
+	e_OCJT[(u8)sfotops::INOP21] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP21] = (u8)r_AM::ABS;
+	e_CCTT[(u8)sfotops::INOP21] = 4;
+
+	e_OCJT[(u8)sfotops::INOP22] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP22] = (u8)r_AM::ABSX;
+	e_CCTT[(u8)sfotops::INOP22] = 4; // *
+	e_OCJT[(u8)sfotops::INOP23] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP23] = (u8)r_AM::ABSX;
+	e_CCTT[(u8)sfotops::INOP23] = 4; // *
+	e_OCJT[(u8)sfotops::INOP24] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP24] = (u8)r_AM::ABSX;
+	e_CCTT[(u8)sfotops::INOP24] = 4; // *
+	e_OCJT[(u8)sfotops::INOP25] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP25] = (u8)r_AM::ABSX;
+	e_CCTT[(u8)sfotops::INOP25] = 4; // *
+	e_OCJT[(u8)sfotops::INOP26] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP26] = (u8)r_AM::ABSX;
+	e_CCTT[(u8)sfotops::INOP26] = 4; // *
+	e_OCJT[(u8)sfotops::INOP27] = &sfot::O_INOP;
+	e_OCAM[(u8)sfotops::INOP27] = (u8)r_AM::ABSX;
+	e_CCTT[(u8)sfotops::INOP27] = 4; // *
+
+	// Load accumulator and x register
+	e_OCJT[(u8)sfotops::LAX_ZPG] = &sfot::O_LAX;
+	e_OCAM[(u8)sfotops::LAX_ZPG] = (u8)r_AM::ZPG;
+	e_CCTT[(u8)sfotops::LAX_ZPG] = 3;
+
+	e_OCJT[(u8)sfotops::LAX_ZPGY] = &sfot::O_LAX;
+	e_OCAM[(u8)sfotops::LAX_ZPGY] = (u8)r_AM::ZPGY;
+	e_CCTT[(u8)sfotops::LAX_ZPGY] = 4;
+
+	e_OCJT[(u8)sfotops::LAX_ABS] = &sfot::O_LAX;
+	e_OCAM[(u8)sfotops::LAX_ABS] = (u8)r_AM::ABS;
+	e_CCTT[(u8)sfotops::LAX_ABS] = 4;
+
+	e_OCJT[(u8)sfotops::LAX_ABSY] = &sfot::O_LAX;
+	e_OCAM[(u8)sfotops::LAX_ABSY] = (u8)r_AM::ABSY;
+	e_CCTT[(u8)sfotops::LAX_ABSY] = 4; // *
+
+	e_OCJT[(u8)sfotops::LAX_XIND] = &sfot::O_LAX;
+	e_OCAM[(u8)sfotops::LAX_XIND] = (u8)r_AM::XIND;
+	e_CCTT[(u8)sfotops::LAX_XIND] = 6;
+
+	e_OCJT[(u8)sfotops::LAX_INDY] = &sfot::O_LAX;
+	e_OCAM[(u8)sfotops::LAX_INDY] = (u8)r_AM::INDY;
+	e_CCTT[(u8)sfotops::LAX_INDY] = 5; // *
+
+	// A ANDED to X and stored in memory
+	e_OCJT[(u8)sfotops::SAX_ZPG] = &sfot::O_SAX;
+	e_OCAM[(u8)sfotops::SAX_ZPG] = (u8)r_AM::ZPG;
+	e_CCTT[(u8)sfotops::SAX_ZPG] = 3;
+
+	e_OCJT[(u8)sfotops::SAX_ZPGY] = &sfot::O_SAX;
+	e_OCAM[(u8)sfotops::SAX_ZPGY] = (u8)r_AM::ZPGY;
+	e_CCTT[(u8)sfotops::SAX_ZPGY] = 4;
+
+	e_OCJT[(u8)sfotops::SAX_ABS] = &sfot::O_SAX;
+	e_OCAM[(u8)sfotops::SAX_ABS] = (u8)r_AM::ABS;
+	e_CCTT[(u8)sfotops::SAX_ABS] = 4;
+
+	e_OCJT[(u8)sfotops::SAX_XIND] = &sfot::O_SAX;
+	e_OCAM[(u8)sfotops::SAX_XIND] = (u8)r_AM::XIND;
+	e_CCTT[(u8)sfotops::SAX_XIND] = 6;
+
+	// Illegal SBC (SBC + No operation)
+	e_OCJT[(u8)sfotops::ISBC] = &sfot::O_SBC;
+	e_OCAM[(u8)sfotops::ISBC] = (u8)r_AM::IMM;
+	e_CCTT[(u8)sfotops::ISBC] = 2;
+
+	// Decrement and compare
+	e_OCJT[(u8)sfotops::DCP_ZPG] = &sfot::O_DCP;
+	e_OCAM[(u8)sfotops::DCP_ZPG] = (u8)r_AM::ZPG;
+	e_CCTT[(u8)sfotops::DCP_ZPG] = 5;
+
+	e_OCJT[(u8)sfotops::DCP_ZPGX] = &sfot::O_DCP;
+	e_OCAM[(u8)sfotops::DCP_ZPGX] = (u8)r_AM::ZPGX;
+	e_CCTT[(u8)sfotops::DCP_ZPGX] = 6;
+
+	e_OCJT[(u8)sfotops::DCP_ABS] = &sfot::O_DCP;
+	e_OCAM[(u8)sfotops::DCP_ABS] = (u8)r_AM::ABS;
+	e_CCTT[(u8)sfotops::DCP_ABS] = 6;
+
+	e_OCJT[(u8)sfotops::DCP_ABSX] = &sfot::O_DCP;
+	e_OCAM[(u8)sfotops::DCP_ABSX] = (u8)r_AM::ABSX;
+	e_CCTT[(u8)sfotops::DCP_ABSX] = 7;
+
+	e_OCJT[(u8)sfotops::DCP_ABSY] = &sfot::O_DCP;
+	e_OCAM[(u8)sfotops::DCP_ABSY] = (u8)r_AM::ABSY;
+	e_CCTT[(u8)sfotops::DCP_ABSY] = 7;
+
+	e_OCJT[(u8)sfotops::DCP_XIND] = &sfot::O_DCP;
+	e_OCAM[(u8)sfotops::DCP_XIND] = (u8)r_AM::XIND;
+	e_CCTT[(u8)sfotops::DCP_XIND] = 8;
+
+	e_OCJT[(u8)sfotops::DCP_INDY] = &sfot::O_DCP;
+	e_OCAM[(u8)sfotops::DCP_INDY] = (u8)r_AM::INDY;
+	e_CCTT[(u8)sfotops::DCP_INDY] = 8;
+
+	// Increment memory and subtract
+	e_OCJT[(u8)sfotops::ISC_ZPG] = &sfot::O_ISC;
+	e_OCAM[(u8)sfotops::ISC_ZPG] = (u8)r_AM::ZPG;
+	e_CCTT[(u8)sfotops::ISC_ZPG] = 5;
+
+	e_OCJT[(u8)sfotops::ISC_ZPGX] = &sfot::O_ISC;
+	e_OCAM[(u8)sfotops::ISC_ZPGX] = (u8)r_AM::ZPGX;
+	e_CCTT[(u8)sfotops::ISC_ZPGX] = 6;
+
+	e_OCJT[(u8)sfotops::ISC_ABS] = &sfot::O_ISC;
+	e_OCAM[(u8)sfotops::ISC_ABS] = (u8)r_AM::ABS;
+	e_CCTT[(u8)sfotops::ISC_ABS] = 6;
+
+	e_OCJT[(u8)sfotops::ISC_ABSX] = &sfot::O_ISC;
+	e_OCAM[(u8)sfotops::ISC_ABSX] = (u8)r_AM::ABSX;
+	e_CCTT[(u8)sfotops::ISC_ABSX] = 7;
+
+	e_OCJT[(u8)sfotops::ISC_ABSY] = &sfot::O_ISC;
+	e_OCAM[(u8)sfotops::ISC_ABSY] = (u8)r_AM::ABSY;
+	e_CCTT[(u8)sfotops::ISC_ABSY] = 7;
+
+	e_OCJT[(u8)sfotops::ISC_XIND] = &sfot::O_ISC;
+	e_OCAM[(u8)sfotops::ISC_XIND] = (u8)r_AM::XIND;
+	e_CCTT[(u8)sfotops::ISC_XIND] = 8;
+
+	e_OCJT[(u8)sfotops::ISC_INDY] = &sfot::O_ISC;
+	e_OCAM[(u8)sfotops::ISC_INDY] = (u8)r_AM::INDY;
+	e_CCTT[(u8)sfotops::ISC_INDY] = 8;
+
+	// Shift memory left and OR
+	e_OCJT[(u8)sfotops::SLO_ZPG] = &sfot::O_SLO;
+	e_OCAM[(u8)sfotops::SLO_ZPG] = (u8)r_AM::ZPG;
+	e_CCTT[(u8)sfotops::SLO_ZPG] = 5;
+						
+	e_OCJT[(u8)sfotops::SLO_ZPGX] = &sfot::O_SLO;
+	e_OCAM[(u8)sfotops::SLO_ZPGX] = (u8)r_AM::ZPGX;
+	e_CCTT[(u8)sfotops::SLO_ZPGX] = 6;
+						
+	e_OCJT[(u8)sfotops::SLO_ABS] = &sfot::O_SLO;
+	e_OCAM[(u8)sfotops::SLO_ABS] = (u8)r_AM::ABS;
+	e_CCTT[(u8)sfotops::SLO_ABS] = 6;
+						
+	e_OCJT[(u8)sfotops::SLO_ABSX] = &sfot::O_SLO;
+	e_OCAM[(u8)sfotops::SLO_ABSX] = (u8)r_AM::ABSX;
+	e_CCTT[(u8)sfotops::SLO_ABSX] = 7;
+						
+	e_OCJT[(u8)sfotops::SLO_ABSY] = &sfot::O_SLO;
+	e_OCAM[(u8)sfotops::SLO_ABSY] = (u8)r_AM::ABSY;
+	e_CCTT[(u8)sfotops::SLO_ABSY] = 7;
+						
+	e_OCJT[(u8)sfotops::SLO_XIND] = &sfot::O_SLO;
+	e_OCAM[(u8)sfotops::SLO_XIND] = (u8)r_AM::XIND;
+	e_CCTT[(u8)sfotops::SLO_XIND] = 8;
+						
+	e_OCJT[(u8)sfotops::SLO_INDY] = &sfot::O_SLO;
+	e_OCAM[(u8)sfotops::SLO_INDY] = (u8)r_AM::INDY;
+	e_CCTT[(u8)sfotops::SLO_INDY] = 8;
+
+	// Rotate memory left and AND
+	e_OCJT[(u8)sfotops::RLA_ZPG] = &sfot::O_RLA;
+	e_OCAM[(u8)sfotops::RLA_ZPG] = (u8)r_AM::ZPG;
+	e_CCTT[(u8)sfotops::RLA_ZPG] = 5;
+						
+	e_OCJT[(u8)sfotops::RLA_ZPGX] = &sfot::O_RLA;
+	e_OCAM[(u8)sfotops::RLA_ZPGX] = (u8)r_AM::ZPGX;
+	e_CCTT[(u8)sfotops::RLA_ZPGX] = 6;
+						
+	e_OCJT[(u8)sfotops::RLA_ABS] = &sfot::O_RLA;
+	e_OCAM[(u8)sfotops::RLA_ABS] = (u8)r_AM::ABS;
+	e_CCTT[(u8)sfotops::RLA_ABS] = 6;
+						
+	e_OCJT[(u8)sfotops::RLA_ABSX] = &sfot::O_RLA;
+	e_OCAM[(u8)sfotops::RLA_ABSX] = (u8)r_AM::ABSX;
+	e_CCTT[(u8)sfotops::RLA_ABSX] = 7;
+						
+	e_OCJT[(u8)sfotops::RLA_ABSY] = &sfot::O_RLA;
+	e_OCAM[(u8)sfotops::RLA_ABSY] = (u8)r_AM::ABSY;
+	e_CCTT[(u8)sfotops::RLA_ABSY] = 7;
+						
+	e_OCJT[(u8)sfotops::RLA_XIND] = &sfot::O_RLA;
+	e_OCAM[(u8)sfotops::RLA_XIND] = (u8)r_AM::XIND;
+	e_CCTT[(u8)sfotops::RLA_XIND] = 8;
+						
+	e_OCJT[(u8)sfotops::RLA_INDY] = &sfot::O_RLA;
+	e_OCAM[(u8)sfotops::RLA_INDY] = (u8)r_AM::INDY;
+	e_CCTT[(u8)sfotops::RLA_INDY] = 8;
+
+	// Shift right and OR
+	e_OCJT[(u8)sfotops::SRE_ZPG] = &sfot::O_SRE;
+	e_OCAM[(u8)sfotops::SRE_ZPG] = (u8)r_AM::ZPG;
+	e_CCTT[(u8)sfotops::SRE_ZPG] = 5;
+						
+	e_OCJT[(u8)sfotops::SRE_ZPGX] = &sfot::O_SRE;
+	e_OCAM[(u8)sfotops::SRE_ZPGX] = (u8)r_AM::ZPGX;
+	e_CCTT[(u8)sfotops::SRE_ZPGX] = 6;
+						
+	e_OCJT[(u8)sfotops::SRE_ABS] = &sfot::O_SRE;
+	e_OCAM[(u8)sfotops::SRE_ABS] = (u8)r_AM::ABS;
+	e_CCTT[(u8)sfotops::SRE_ABS] = 6;
+						
+	e_OCJT[(u8)sfotops::SRE_ABSX] = &sfot::O_SRE;
+	e_OCAM[(u8)sfotops::SRE_ABSX] = (u8)r_AM::ABSX;
+	e_CCTT[(u8)sfotops::SRE_ABSX] = 7;
+						
+	e_OCJT[(u8)sfotops::SRE_ABSY] = &sfot::O_SRE;
+	e_OCAM[(u8)sfotops::SRE_ABSY] = (u8)r_AM::ABSY;
+	e_CCTT[(u8)sfotops::SRE_ABSY] = 7;
+						
+	e_OCJT[(u8)sfotops::SRE_XIND] = &sfot::O_SRE;
+	e_OCAM[(u8)sfotops::SRE_XIND] = (u8)r_AM::XIND;
+	e_CCTT[(u8)sfotops::SRE_XIND] = 8;
+						
+	e_OCJT[(u8)sfotops::SRE_INDY] = &sfot::O_SRE;
+	e_OCAM[(u8)sfotops::SRE_INDY] = (u8)r_AM::INDY;
+	e_CCTT[(u8)sfotops::SRE_INDY] = 8;
+
+	// Rotate right and add with carry
+	e_OCJT[(u8)sfotops::RRA_ZPG] = &sfot::O_RRA;
+	e_OCAM[(u8)sfotops::RRA_ZPG] = (u8)r_AM::ZPG;
+	e_CCTT[(u8)sfotops::RRA_ZPG] = 5;
+						
+	e_OCJT[(u8)sfotops::RRA_ZPGX] = &sfot::O_RRA;
+	e_OCAM[(u8)sfotops::RRA_ZPGX] = (u8)r_AM::ZPGX;
+	e_CCTT[(u8)sfotops::RRA_ZPGX] = 6;
+						
+	e_OCJT[(u8)sfotops::RRA_ABS] = &sfot::O_RRA;
+	e_OCAM[(u8)sfotops::RRA_ABS] = (u8)r_AM::ABS;
+	e_CCTT[(u8)sfotops::RRA_ABS] = 6;
+						
+	e_OCJT[(u8)sfotops::RRA_ABSX] = &sfot::O_RRA;
+	e_OCAM[(u8)sfotops::RRA_ABSX] = (u8)r_AM::ABSX;
+	e_CCTT[(u8)sfotops::RRA_ABSX] = 7;
+						
+	e_OCJT[(u8)sfotops::RRA_ABSY] = &sfot::O_RRA;
+	e_OCAM[(u8)sfotops::RRA_ABSY] = (u8)r_AM::ABSY;
+	e_CCTT[(u8)sfotops::RRA_ABSY] = 7;
+						
+	e_OCJT[(u8)sfotops::RRA_XIND] = &sfot::O_RRA;
+	e_OCAM[(u8)sfotops::RRA_XIND] = (u8)r_AM::XIND;
+	e_CCTT[(u8)sfotops::RRA_XIND] = 8;
+						
+	e_OCJT[(u8)sfotops::RRA_INDY] = &sfot::O_RRA;
+	e_OCAM[(u8)sfotops::RRA_INDY] = (u8)r_AM::INDY;
+	e_CCTT[(u8)sfotops::RRA_INDY] = 8;
 }

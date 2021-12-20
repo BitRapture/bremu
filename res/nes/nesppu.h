@@ -60,6 +60,9 @@ public: // Public methods
 	// Emulate one cycle of the ppu
 	void EmulateCycle(nesbus& _memory);
 
+	// Reset the ppu
+	void Reset();
+
 	// Create a full screen frame
 	std::function<void()> CreateFrame;
 

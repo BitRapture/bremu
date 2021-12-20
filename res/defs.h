@@ -16,11 +16,9 @@ using u32 = unsigned int;
 // 64 bits
 using u64 = unsigned long;
 
-// Common sfot memory sizes (kibibytes)
-enum class sfotcmem : u32 { M1K = 1024, M8K = 8192, M16K = 16384, M32K = 32768, M64K = 65535 };
-
 // Opcodes names
 enum class sfotops : u8 {
+	// Legal opcodes
 	LDA_IMM = 0xA9, LDA_ZPG = 0xA5, LDA_ZPGX = 0xB5, LDA_ABS = 0xAD, LDA_ABSX = 0xBD, LDA_ABSY = 0xB9, LDA_XIND = 0xA1, LDA_INDY = 0xB1,
 	LDX_IMM = 0xA2, LDX_ZPG = 0xA6, LDX_ZPGY = 0xB6, LDX_ABS = 0xAE, LDX_ABSY = 0xBE,
 	LDY_IMM = 0xA0, LDY_ZPG = 0xA4, LDY_ZPGX = 0xB4, LDY_ABS = 0xAC, LDY_ABSX = 0xBC,
@@ -53,7 +51,20 @@ enum class sfotops : u8 {
 	CLC = 0x18, CLD = 0xD8, CLI = 0x58, CLV = 0xB8, SEC = 0x38, SED = 0xF8, SEI = 0x78,
 	BRK = 0x00,
 	NOP = 0xEA,
-	RTI = 0x40
+	RTI = 0x40,
+	// Illegal opcodes (multiple same address modes, so numbering is used instead)
+	INOP1 = 0x1A, INOP2 = 0x3A, INOP3 = 0x5A, INOP4 = 0x7A, INOP5 = 0xDA, INOP6 = 0xFA, INOP7 = 0x80, INOP8 = 0x82, INOP9 = 0x89, INOP10 = 0xC2,
+	INOP11 = 0xE2, INOP12 = 0x04, INOP13 = 0x44, INOP14 = 0x64, INOP15 = 0x14, INOP16 = 0x34, INOP17 = 0x54, INOP18 = 0x74, INOP19 = 0xD4, INOP20 = 0xF4,
+	INOP21 = 0x0C, INOP22 = 0x1C, INOP23 = 0x3C, INOP24 = 0x5C, INOP25 = 0x7C, INOP26 = 0xDC, INOP27 = 0xFC,
+	LAX_ZPG = 0xA7, LAX_ZPGY = 0xB7, LAX_ABS = 0xAF, LAX_ABSY = 0xBF, LAX_XIND = 0xA3, LAX_INDY = 0xB3,
+	SAX_ZPG = 0x87, SAX_ZPGY = 0x97, SAX_ABS = 0x8F, SAX_XIND = 0x83,
+	ISBC = 0xEB,
+	DCP_ZPG = 0xC7, DCP_ZPGX = 0xD7, DCP_ABS = 0xCF, DCP_ABSX = 0xDF, DCP_ABSY = 0xDB, DCP_XIND = 0xC3, DCP_INDY = 0xD3,
+	ISC_ZPG = 0xE7, ISC_ZPGX = 0xF7, ISC_ABS = 0xEF, ISC_ABSX = 0xFF, ISC_ABSY = 0xFB, ISC_XIND = 0xE3, ISC_INDY = 0xF3,
+	SLO_ZPG = 0x07, SLO_ZPGX = 0x17, SLO_ABS = 0x0F, SLO_ABSX = 0x1F, SLO_ABSY = 0x1B, SLO_XIND = 0x03, SLO_INDY = 0x13,
+	RLA_ZPG = 0x27, RLA_ZPGX = 0x37, RLA_ABS = 0x2F, RLA_ABSX = 0x3F, RLA_ABSY = 0x3B, RLA_XIND = 0x23, RLA_INDY = 0x33,
+	SRE_ZPG = 0x47, SRE_ZPGX = 0x57, SRE_ABS = 0x4F, SRE_ABSX = 0x5F, SRE_ABSY = 0x5B, SRE_XIND = 0x43, SRE_INDY = 0x53,
+	RRA_ZPG = 0x67, RRA_ZPGX = 0x77, RRA_ABS = 0x6F, RRA_ABSX = 0x7F, RRA_ABSY = 0x7B, RRA_XIND = 0x63, RRA_INDY = 0x73
 };
 
 #endif // !_DEFS_H_
