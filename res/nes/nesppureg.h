@@ -18,13 +18,25 @@ public: // Registers
 	u8 r_PPUCTRL{ 0 };
 	u8 r_PPUMASK{ 0 };
 	u8 r_PPUSTATUS{ 0 };
+	u8 r_OAMDATA{ 0 };
+	u8 r_OAMADDR{ 0 };
+
+	/// Direct memory access registers
+	u8 r_PPUDMA{ 0 };
+	u8 r_DMAccess{ 0 }; // Counter for accesses
 
 public: // Getters & Setters
-	const bool GetVBLANK() { return (r_PPUCTRL & 0x80); }
-	const bool GetVRAMInc() { return (r_PPUCTRL & 0x04); }
-	
-	const bool ShowBackground() { return (r_PPUMASK & 0x08); }
-	const bool ShowSprites() { return (r_PPUMASK & 0x10); }
+	bool GetVBLANK() { return ((r_PPUCTRL & 0x80) > 0); }
+	bool GetVRAMInc() { return ((r_PPUCTRL & 0x04) > 0); }
+	bool GetPatternTable() { return ((r_PPUCTRL & 0x10) > 0); }
+
+	u8 GetFineY() { return (r_VRAMA >> 12); }
+	u8 GetCoarseX() { return (r_VRAMA & 0x001F); }
+	u8 GetCoarseY() { return ((r_VRAMA & 0x03E0) >> 5); }
+
+	bool ShowBackground() { return ((r_PPUMASK & 0x08) > 0); }
+	bool ShowSprites() { return ((r_PPUMASK & 0x10) > 0); }
+	bool RenderingEnabled() { return (ShowBackground() || ShowSprites()); }
 };
 
 #endif // !_NESPPUREG_H_

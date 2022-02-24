@@ -4,6 +4,7 @@
 
 void nes::CPUTick()
 {
+	++e_Cycles;
 	for (u32 i = 0; i < 3; ++i) { m_PPU.EmulateCycle(m_Bus); }
 }
 
@@ -24,7 +25,7 @@ void nes::PPUFrame()
 
 void nes::Clock()
 {
-	// nestest ->    std::cout << m_CPU.GetDebugInfo() << " CYC:" << std::dec << e_Cycles << std::endl; 
+	//std::cout << m_CPU.GetDebugInfo() << " CYC:" << std::dec << e_Cycles << std::endl; 
 
 	// Synchronize to cpu cycles (1 cpu cycle = 3 ppu cycles)
 	if (m_PPU.GetGenNMI())
@@ -36,7 +37,7 @@ void nes::Clock()
 void nes::Run()
 {
 	// Load game into cartridge port
-	m_Cartridge.LoadCartridge("./carts/nestest.nes");
+	m_Cartridge.LoadCartridge("./carts/mario.nes");
 	if (!m_Cartridge.IsLoaded()) { return; }
 	m_PPU.Reset();
 	m_CPU.Reset(m_Bus);
@@ -66,13 +67,14 @@ nes::nes(SDL_Window* _window, SDL_Renderer* _context)
 	// Connect components to eachother
 	m_Bus.m_Cart = &m_Cartridge;
 	m_Bus.m_PPUReg = &m_PPU.m_Reg;
+	m_Bus.m_Cont[0] = &m_Player1;
+	m_Bus.m_Cont[1] = &m_Player2;
 	// Connect function pointers
 	m_CPU.Tick = std::bind(&nes::CPUTick, this);
 	m_PPU.CreateFrame = std::bind(&nes::PPUFrame, this);
 
 	// Create SDL variables
 	m_PPUScreen = SDL_CreateTexture(m_Context, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 256, 240);
-	SDL_SetTextureBlendMode(m_PPUScreen, SDL_BLENDMODE_NONE);
 }
 
 nes::~nes()

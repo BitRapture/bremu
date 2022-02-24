@@ -578,7 +578,7 @@ void sfot::O_BRK(u16& _addr, nesbus& _mem)
 	addr = 0x0100 | r_S; --r_S;
 	_mem.CPUWrite(addr, r_SX);
 	// Go to location
-	r_PC = _mem.CPURead(e_BRK_L) + (_mem.CPURead(e_BRK_H) << 8);
+	r_PC = _mem.CPURead(e_BRK_L) | ((u16)_mem.CPURead(e_BRK_H) << 8);
 }
 void sfot::O_RTI(u16& _addr, nesbus& _mem)
 {
@@ -679,7 +679,7 @@ void sfot::EmulateStep(nesbus& _memory)
 	switch (e_OCAM[opcode])
 	{
 	case (u8)r_AM::IMM: { addr = r_PC; ++r_PC; break; } // Immediate addressing
-	case (u8)r_AM::NINST: { for (int i = 0; i < e_CCTT[opcode]; ++i) { Tick(); } return; break; } // No instruction to execute (NOP & out of mem)
+	case (u8)r_AM::NINST: { for (u32 i = 0; i < e_CCTT[opcode]; ++i) { Tick(); } return; break; } // No instruction to execute (NOP & out of mem)
 	case (u8)r_AM::NOADDR: { break; } // No address needed 
 	default:
 		// Get the address from the opcodes addressing mode
@@ -690,7 +690,7 @@ void sfot::EmulateStep(nesbus& _memory)
 	(this->*e_OCJT[opcode])(addr, _memory);
 
 	// Call the tick method X amount of cycles
-	for (int i = 0; i < e_CCTT[opcode]; ++i) { Tick(); }
+	for (u32 i = 0; i < e_CCTT[opcode]; ++i) { Tick(); }
 	// Add extra tick
 	if (e_PBC) { Tick(); }
 }
@@ -698,7 +698,7 @@ void sfot::EmulateStep(nesbus& _memory)
 void sfot::Reset(nesbus& _memory)
 {
 	// Set program counter to reset vector
-	r_PC = _memory.CPURead(e_RESET_L) | (_memory.CPURead(e_RESET_H) << 8);
+	r_PC = _memory.CPURead(e_RESET_L) | ((u16)_memory.CPURead(e_RESET_H) << 8);
 	BIT_SET(r_SR, (u8)r_SRSs::I, 1);
 	BIT_SET(r_SR, (u8)r_SRSs::S, 1);
 	BIT_SET(r_SR, (u8)r_SRSs::D, 0);
@@ -721,7 +721,7 @@ void sfot::NMI(nesbus& _memory)
 	addr = 0x0100 | r_S; --r_S;
 	_memory.CPUWrite(addr, r_SX);
 	// Set program counter to NMI vector
-	r_PC = _memory.CPURead(e_NMI_L) | (_memory.CPURead(e_NMI_H) << 8);
+	r_PC = _memory.CPURead(e_NMI_L) | ((u16)_memory.CPURead(e_NMI_H) << 8);
 	// Tick 7 times
 	for (int i = 0; i < 7; ++i) { Tick(); }
 }

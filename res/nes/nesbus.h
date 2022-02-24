@@ -4,6 +4,7 @@
 #include "../defs.h"
 #include "nescart.h"
 #include "nesppureg.h"
+#include "nescontroller.h"
 
 // The bus of the nes 
 struct nesbus
@@ -16,13 +17,17 @@ private: // Memory
 public: // Connections
 	nescart* m_Cart{ nullptr };
 	nesppureg* m_PPUReg{ nullptr };
+	nescontroller* m_Cont[2]{ nullptr };
 
 private: // Internal methods
 	const u16 PPUGetMirroring(const u16& _addr);
 	const u16 PALGetMirroring(const u16& _addr);
 
-	const u8 CPUReadPPUReg(const u16 _addr);
-	void CPUWritePPUReg(const u16 _addr, const u8& _data);
+	const u8 CPUReadPPUReg(const u16& _addr);
+	void CPUWritePPUReg(const u16& _addr, const u8& _data);
+
+	const u8 CPUReadIO(const u16& _addr);
+	void CPUWriteIO(const u16& _addr);
 
 public: // Public methods
 	const u8 CPURead(const u16& _addr);

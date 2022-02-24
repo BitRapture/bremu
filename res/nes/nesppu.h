@@ -22,6 +22,15 @@ private: // Internal emulation variables
 	// If the current rendering frame is an odd frame
 	bool e_OddFrame{ false };
 
+public: // Public emulation variables
+	// The palette used (default PAL palette)
+	u32 e_Palette[0x40]{
+	   0x00808080, 0x00003DA6, 0x000012B0, 0x00440096, 0x00A1005E, 0x00C70028, 0x00BA0600, 0x008C1700, 0x005C2F00, 0x00104500, 0x00054A00, 0x0000472E, 0x00004166, 0x00000000, 0x00050505, 0x00050505,
+	   0x00C7C7C7, 0x000077FF, 0x002155FF, 0x008237FA, 0x00EB2FB5, 0x00FF2950, 0x00FF2200, 0x00D63200, 0x00C46200, 0x00358000, 0x00058F00, 0x00008A55, 0x000099CC, 0x00212121, 0x00090909, 0x00090909,
+	   0x00FFFFFF, 0x000FD7FF, 0x0069A2FF, 0x00D480FF, 0x00FF45F3, 0x00FF618B, 0x00FF8833, 0x00FF9C12, 0x00FABC20, 0x009FE30E, 0x002BF035, 0x000CF0A4, 0x0005FBFF, 0x005E5E5E, 0x000D0D0D, 0x000D0D0D,
+	   0x00FFFFFF, 0x00A6FCFF, 0x00B3ECFF, 0x00DAABEB, 0x00FFA8F9, 0x00FFABB3, 0x00FFD2B0, 0x00FFEFA6, 0x00FFF79C, 0x00D7E895, 0x00A6EDAF, 0x00A2F2DA, 0x0099FFFC, 0x00DDDDDD, 0x00111111, 0x00111111
+	};
+
 private: // Internal Components
 	// BG shifters
 	// Pattern table shifters
@@ -50,11 +59,16 @@ public: // Getters
 
 private: // Internal methods
 	// Create pixel from component data
-	void AssemblePixel();
+	void AssemblePixel(nesbus& _memory);
 
 	void LoadBGShifters();
 
 	void ShiftBGShifters();
+
+	void IncrementX();
+	void IncrementY();
+	void TransferX();
+	void TransferY();
 
 public: // Public methods
 	// Emulate one cycle of the ppu

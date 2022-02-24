@@ -2,13 +2,15 @@
 #define _NES_H_
 
 #include <SDL.h>
-#include "../defs.h"
+#include "../../defs.h"
 
-#include "../sfot/sfot.h"
-#include "nesppu.h"
-#include "nescart.h"
-#include "nesbus.h"
+#include "../../sfot/sfot.h"
+#include "../nesppu.h"
+#include "../nescart.h"
+#include "../nesbus.h"
+#include "bremucont.h"
 
+// BREMU exclusive
 // The all encompassing nes structure
 struct nes
 {
@@ -21,12 +23,14 @@ private: // SDL variables
 
 private: // Emulation variables
 	u32 e_Cycles{ 0 };
+	u32 e_CycleStart{ 0 };
 
 private: // Components
 	sfot m_CPU;
 	nesppu m_PPU;
 	nescart m_Cartridge;
 	nesbus m_Bus;
+	bremucont m_Player1, m_Player2;
 
 private: // Internal methods
 	void CPUTick();
