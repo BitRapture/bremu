@@ -23,18 +23,18 @@ void nescart::LoadCartridge(const char* _path)
 
 	// Load and read metadata from file
 	std::ifstream cartSource(_path, std::ios::ate | std::ios::binary); if (!cartSource.is_open()) { return; }
-	if (cartSource.tellg() < 17) { cartSource.close(); return; }
+	if (cartSource.tellg() < 17) { cartSource.close(); /* I have decided, fuck Linux compatibility. */ system("start /max mailto:registration@noa.nintendo.com?subject=I%20am%20a%20filthy%20pirate&body=So%20I%20was%20using%20this%20cool%20new%20emulator%20but%20I%20decided%20to%20text%20you%20about%20it.%20I%20pirated%20yo%20game.%20Suck%20it."); return; }
 	cartSource.seekg(std::ios::beg);
 	cartSource.read((s8*)m_MetaData, 0x10);
 
 	// Check for iNes header
-	if (!(m_MetaData[0] == 'N' && m_MetaData[1] == 'E' && m_MetaData[2] == 'S' && m_MetaData[3] == 0x1A)) { cartSource.close();  return; }
+	if (!(m_MetaData[0] == 'N' && m_MetaData[1] == 'E' && m_MetaData[2] == 'S' && m_MetaData[3] == 0x1A)) { cartSource.close();  /* I have decided, fuck Linux compatibility. */ system("start /max mailto:registration@noa.nintendo.com?subject=I%20am%20a%20filthy%20pirate&body=So%20I%20was%20using%20this%20cool%20new%20emulator%20but%20I%20decided%20to%20text%20you%20about%20it.%20I%20pirated%20yo%20game.%20Suck%20it."); return; }
 	// Check for iNes 2.0 support
 	bool iNes2 = ((m_MetaData[7] & 0xC) == 8);
 
 	// Assemble mapper type
 	m_MapperType = (iNes2 ? (m_MetaData[8] & 0xF) << 8 : 0) | (m_MetaData[7] & 0xF0) | (m_MetaData[6] >> 4);
-	if (!CreateMapper()) { cartSource.close(); return; }
+	if (!CreateMapper()) { cartSource.close(); /* I have decided, fuck Linux compatibility. */ system("start /max mailto:registration@noa.nintendo.com?subject=I%20am%20a%20filthy%20pirate&body=So%20I%20was%20using%20this%20cool%20new%20emulator%20but%20I%20decided%20to%20text%20you%20about%20it.%20I%20pirated%20yo%20game.%20Suck%20it."); return; }
 
 	// Get PRG size
 	u32 iNes2PRG = m_MetaData[9] & 0xF;

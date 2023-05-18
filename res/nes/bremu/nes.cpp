@@ -2,10 +2,42 @@
 
 #include <iostream>
 
+#include <Windows.h>
+#include <Commdlg.h>
+#include <string>
+
 void nes::CPUTick()
 {
 	++e_Cycles;
 	for (u32 i = 0; i < 3; ++i) { m_PPU.EmulateCycle(m_Bus); }
+}
+
+std::wstring OpenFileBrowseDialog(HWND hwndOwner)
+{
+	OPENFILENAME ofn;
+	WCHAR szFile[MAX_PATH] = L"";
+
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hwndOwner;
+	ofn.lpstrFile = szFile;
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFilter = L"NES ROM Files :) (*.nes)\0*.nes";  // Filter to show all files
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+	if (GetOpenFileName(&ofn))
+	{
+		return std::wstring(ofn.lpstrFile);
+	}
+	else
+	{
+		return L"";  // Return an empty string if the user cancels the dialog
+	}
 }
 
 void nes::PPUFrame()
@@ -37,7 +69,9 @@ void nes::Clock()
 void nes::Run()
 {
 	// Load game into cartridge port
-	m_Cartridge.LoadCartridge("./carts/mario.nes");
+	auto filepath = OpenFileBrowseDialog(NULL);
+	std::string str(filepath.begin(), filepath.end());
+	m_Cartridge.LoadCartridge(str.c_str());
 	if (!m_Cartridge.IsLoaded()) { return; }
 	m_PPU.Reset();
 	m_CPU.Reset(m_Bus);
